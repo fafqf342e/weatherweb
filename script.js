@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const city = searchInput.value.trim();
         if (city) {
-            fetchWeatherData(city, true);
+            fetchWeatherData(city, false, true);  // Запрашиваем 10-дневный прогноз для городов, введенных пользователем
             searchInput.value = '';
         }
     });
@@ -68,8 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
         1282: 'rgba(245, 245, 245, 0.75)'   // Moderate or heavy snow with thunder
     };
 
-    const fetchWeatherData = (city, clearContainer = false) => {
-        fetch(`${apiBaseUrl}${apiKey}&q=${city}&days=10&aqi=no&alerts=no`)
+    const fetchWeatherData = (city, isInitialCity = false, clearContainer = false) => {
+        const days = isInitialCity ? 1 : 10;  // Использование 1 дня для начальных городов и 10 дней для остальных
+        fetch(`${apiBaseUrl}${apiKey}&q=${city}&days=${days}&aqi=no&alerts=no`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('City not found');
@@ -88,29 +89,32 @@ document.addEventListener('DOMContentLoaded', () => {
             weatherContainer.innerHTML = '';
         }
 
-        forecast.slice(0, 1).forEach(day => {
+        forecast.forEach(day => {
             const date = new Date(day.date);
             const { name, country } = location;
-            const { temp_c, condition } = data.current;
+            const { maxtemp_c, mintemp_c, condition } = day.day;
             const weatherCode = condition.code;
             const backgroundColor = weatherColors[weatherCode] || 'rgba(255, 255, 255, 0.75)';
             const card = document.createElement('div');
             card.classList.add('weather-card');
             card.style.backgroundColor = backgroundColor;
 
+            const formattedDate = `${date.getDate()} ${getMonthName(date.getMonth())}`;
+            
             card.innerHTML = `
                 <h3>${name}, ${country}</h3>
                 <img src="${condition.icon}" alt="${condition.text}">
                 <p>${condition.text}</p>
-                <p>Temp: ${temp_c} °C</p>
-                <p>Date: ${date.toLocaleDateString()}</p>
+                <p>Max Temp: ${maxtemp_c} °C</p>
+                <p>Min Temp: ${mintemp_c} °C</p>
+                <p>Date: ${formattedDate}</p>
             `;
 
+            card.setAttribute('data-weather', weatherCode);
             weatherContainer.appendChild(card);
-            setDynamicBackground(condition.text);
         });
 
-        setDynamicBackground(forecast[0].day.condition.text); // Установка фона на основе текущей погоды
+        setDynamicBackground(forecast[0].day.condition.text);
     };
 
     const displayErrorMessage = (message) => {
@@ -121,16 +125,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const setDynamicBackground = (condition) => {
         let backgroundColor;
         if (condition.toLowerCase().includes('sunny')) {
-            backgroundColor = 'var(--sunny-color)';
+            backgroundColor = 'var(--weather-1000)';
         } else if (condition.toLowerCase().includes('cloudy')) {
-            backgroundColor = 'var(--cloudy-color)';
-        } else if (condition.toLowerCase().includes('drizzle')) {
-            backgroundColor = 'var(--drizzle-color)';
+            backgroundColor = 'var(--weather-1003)';
+        } else if (condition.toLowerCase().includes('rain')) {
+            backgroundColor = 'var(--weather-1180)';
+        } else if (condition.toLowerCase().includes('snow')) {
+            backgroundColor = 'var(--weather-1210)';
         } else {
             backgroundColor = 'var(--white-color)';
         }
         document.body.style.backgroundColor = backgroundColor;
     };
 
-    initialCities.forEach(city => fetchWeatherData(city));
+    const getMonthName = (monthIndex) => {
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        return months[monthIndex];
+    };
+
+    initialCities.forEach(city => {
+        fetchWeatherData(city, true);
+    });
 });
