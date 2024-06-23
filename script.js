@@ -1,5 +1,5 @@
 const apiKey = '0ca7c41a4cd845edba8215522241406';
-const apiBaseUrl = 'http://api.weatherapi.com/v1/current.json?key=';
+const apiBaseUrl = 'https://api.weatherapi.com/v1/forecast.json?key=';
 
 const initialCities = ['Odesa', 'Dnipropetrovsk', 'Donetsk, Ukraine', 'Luhansk', 'Kherson', 'Kharkiv', 'Kyiv', 'Lviv'];
 
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const fetchWeatherData = (city, clearContainer = false) => {
-        fetch(`${apiBaseUrl}${apiKey}&q=${city}&aqi=no`)
+        fetch(`${apiBaseUrl}${apiKey}&q=${city}&days=10&aqi=no&alerts=no`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('City not found');
@@ -81,29 +81,36 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const displayWeatherData = (data, clearContainer) => {
-        const { name, country } = data.location;
-        const { temp_c, condition, wind_kph, cloud } = data.current;
-        const weatherCode = data.current.condition.code;
-        const backgroundColor = weatherColors[weatherCode] || 'rgba(255, 255, 255, 0.75)';
-
-        const card = document.createElement('div');
-        card.classList.add('weather-card');
-        card.style.backgroundColor = backgroundColor;
-
-        card.innerHTML = `
-            <h3>${name}, ${country}</h3>
-            <img src="${condition.icon}" alt="${condition.text}">
-            <p>${condition.text}</p>
-            <p>Temp: ${temp_c} °C</p>
-            <p>Cloud: ${cloud} %</p>
-            <p>Wind: ${wind_kph} kph</p>
-        `;
+        const location = data.location;
+        const forecast = data.forecast.forecastday;
 
         if (clearContainer) {
-            weatherContainer.innerHTML = '';  
+            weatherContainer.innerHTML = '';
         }
-        weatherContainer.appendChild(card);
-        setDynamicBackground(condition.text);
+
+        forecast.slice(0, 1).forEach(day => {
+            const date = new Date(day.date);
+            const { name, country } = location;
+            const { temp_c, condition } = data.current;
+            const weatherCode = condition.code;
+            const backgroundColor = weatherColors[weatherCode] || 'rgba(255, 255, 255, 0.75)';
+            const card = document.createElement('div');
+            card.classList.add('weather-card');
+            card.style.backgroundColor = backgroundColor;
+
+            card.innerHTML = `
+                <h3>${name}, ${country}</h3>
+                <img src="${condition.icon}" alt="${condition.text}">
+                <p>${condition.text}</p>
+                <p>Temp: ${temp_c} °C</p>
+                <p>Date: ${date.toLocaleDateString()}</p>
+            `;
+
+            weatherContainer.appendChild(card);
+            setDynamicBackground(condition.text);
+        });
+
+        setDynamicBackground(forecast[0].day.condition.text); // Установка фона на основе текущей погоды
     };
 
     const displayErrorMessage = (message) => {
@@ -127,4 +134,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initialCities.forEach(city => fetchWeatherData(city));
 });
-
