@@ -170,7 +170,7 @@ body {
 .weather-card[data-weather="1198"] { background-color: var(--weather-1198); }
 .weather-card[data-weather="1201"] { background-color: var(--weather-1201); }
 .weather-card[data-weather="1204"] { background-color: var(--weather-1204); }
-.weather-card[data-weather="1207"] { background-color: var(--weather-1207); }
+weather-card[data-weather="1207"] { background-color: var(--weather-1207); }
 .weather-card[data-weather="1210"] { background-color: var(--weather-1210); }
 .weather-card[data-weather="1213"] { background-color: var(--weather-1213); }
 .weather-card[data-weather="1216"] { background-color: var(--weather-1216); }
